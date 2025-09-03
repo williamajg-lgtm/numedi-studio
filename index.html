@@ -18,7 +18,7 @@
         <a href="#" class="hover:text-blue-600">Proyecto NUMEDI</a>
         <a href="#" class="hover:text-blue-600">Artículos</a>
         <a href="#" class="hover:text-blue-600">GPTs</a>
-        <a href="#" class="hover:text-blue-600">LaTeX</a>
+        <a href="#latex-visor" class="hover:text-blue-600">LaTeX</a>
         <a href="#" class="hover:text-blue-600">Contacto</a>
       </nav>
     </div>
@@ -55,82 +55,71 @@
     <article class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
       <h2 class="text-xl font-semibold text-blue-700">Herramientas IA (GPTs)</h2>
       <p class="text-gray-600 mt-2">Explora los GPTs y recursos diseñados para docentes e investigadores.</p>
+      <!-- Reemplaza #GPT_LINK# con el enlace real de tu GPT -->
       <a href="#GPT_LINK#" class="inline-block mt-3 text-blue-600 font-medium" target="_blank" rel="noopener">
         Probar mi GPT →
       </a>
     </article>
   </main>
-<!-- === Compilador y visor LaTeX en la MISMA página === -->
-<section class="max-w-6xl mx-auto px-6 py-12" id="latex-visor">
-  <h2 class="text-2xl font-bold text-blue-700">Generar PDF desde LaTeX (en esta página)</h2>
-  <p class="text-gray-600 mt-2">
-    Pega aquí el código LaTeX (por ejemplo, el que te entrega tu GPT). Pulsa “Generar PDF”
-    y el documento se mostrará abajo sin salir de esta página.
-  </p>
 
-  <textarea id="latexInput" class="w-full h-60 mt-4 border rounded-lg p-3 font-mono text-sm"
-    placeholder="\\documentclass{article}
+  <!-- === Compilador y visor LaTeX (POST → iframe) === -->
+  <section class="max-w-6xl mx-auto px-6 py-12" id="latex-visor">
+    <h2 class="text-2xl font-bold text-blue-700">Generar PDF desde LaTeX (en esta página)</h2>
+    <p class="text-gray-600 mt-2">
+      Pega el código LaTeX y pulsa “Generar PDF”. El documento se mostrará abajo sin salir de esta página.
+    </p>
+
+    <!-- El formulario envía por POST al compilador y muestra el resultado en el iframe -->
+    <form id="latexForm" action="https://latexonline.cc/compile" method="post" target="pdfFrame" class="mt-4">
+      <!-- IMPORTANTE: el name DEBE ser 'text' para que el servicio lo compile -->
+      <textarea name="text" id="latexInput"
+        class="w-full h-60 border rounded-lg p-3 font-mono text-sm"
+        placeholder="\\documentclass{article}
 \\begin{document}
 Hola, Numedi Studio.
 \\end{document}"></textarea>
 
-  <div class="mt-4 flex flex-wrap gap-3">
-    <button id="btnPDF" class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800">
-      Generar PDF
-    </button>
-    <button id="btnTex" class="bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-900">
-      Descargar .tex
-    </button>
-    <span id="status" class="self-center text-gray-500"></span>
-  </div>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <button type="submit" class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800">
+          Generar PDF
+        </button>
 
-  <!-- Visor incrustado (no abre nueva página) -->
-  <div class="mt-6 border rounded-lg overflow-hidden">
-    <iframe id="pdfFrame" title="PDF LaTeX" class="w-full" style="height: 70vh;"></iframe>
-  </div>
-</section>
+        <button type="button" id="btnTex"
+          class="bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-900">
+          Descargar .tex
+        </button>
 
-<script>
-  // Descargar archivo .tex localmente
-  function download(filename, text) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'}));
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(a.href);
-    a.remove();
-  }
+        <span id="status" class="self-center text-gray-500"></span>
+      </div>
+    </form>
 
-  // Compilar y mostrar PDF en el iframe (misma página)
-  function compileAndShow() {
-    const status = document.getElementById('status');
-    const frame  = document.getElementById('pdfFrame');
-    const code   = document.getElementById('latexInput').value;
+    <!-- Visor incrustado (mismo nombre que el target del form) -->
+    <div class="mt-6 border rounded-lg overflow-hidden">
+      <iframe name="pdfFrame" id="pdfFrame" title="PDF LaTeX" class="w-full" style="height: 70vh;"></iframe>
+    </div>
+  </section>
 
-    if (!code.trim()) {
-      alert('Pega tu código LaTeX primero.');
-      return;
-    }
-
-    status.textContent = 'Compilando…';
-    const base = 'https://latexonline.cc/compile';
-    const url  = base + '?text=' + encodeURIComponent(code);
-
-    frame.src = url; // Muestra el PDF aquí mismo
-    setTimeout(() => { status.textContent = 'Listo (si no ves el PDF, espera unos segundos y vuelve a pulsar).'; }, 1500);
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btnPDF').addEventListener('click', compileAndShow);
+  <script>
+    // Descargar .tex
     document.getElementById('btnTex').addEventListener('click', () => {
       const code = document.getElementById('latexInput').value || '';
       if (!code.trim()) { alert('No hay código para descargar.'); return; }
-      download('documento.tex', code);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([code], {type: 'text/plain'}));
+      a.download = 'documento.tex';
+      document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
     });
-  });
-</script>
-<!-- === Fin del bloque LaTeX === -->
+
+    // Mensaje simple al enviar
+    document.getElementById('latexForm').addEventListener('submit', () => {
+      document.getElementById('status').textContent = 'Compilando…';
+      document.getElementById('pdfFrame').addEventListener('load', () => {
+        document.getElementById('status').textContent = 'Listo.';
+      }, { once: true });
+    });
+  </script>
+  <!-- === Fin del bloque LaTeX === -->
+
   <!-- Footer -->
   <footer class="bg-gray-900 text-gray-300">
     <div class="max-w-6xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between">
