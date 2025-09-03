@@ -60,7 +60,77 @@
       </a>
     </article>
   </main>
+<!-- === Compilador y visor LaTeX en la MISMA página === -->
+<section class="max-w-6xl mx-auto px-6 py-12" id="latex-visor">
+  <h2 class="text-2xl font-bold text-blue-700">Generar PDF desde LaTeX (en esta página)</h2>
+  <p class="text-gray-600 mt-2">
+    Pega aquí el código LaTeX (por ejemplo, el que te entrega tu GPT). Pulsa “Generar PDF”
+    y el documento se mostrará abajo sin salir de esta página.
+  </p>
 
+  <textarea id="latexInput" class="w-full h-60 mt-4 border rounded-lg p-3 font-mono text-sm"
+    placeholder="\\documentclass{article}
+\\begin{document}
+Hola, Numedi Studio.
+\\end{document}"></textarea>
+
+  <div class="mt-4 flex flex-wrap gap-3">
+    <button id="btnPDF" class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800">
+      Generar PDF
+    </button>
+    <button id="btnTex" class="bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-900">
+      Descargar .tex
+    </button>
+    <span id="status" class="self-center text-gray-500"></span>
+  </div>
+
+  <!-- Visor incrustado (no abre nueva página) -->
+  <div class="mt-6 border rounded-lg overflow-hidden">
+    <iframe id="pdfFrame" title="PDF LaTeX" class="w-full" style="height: 70vh;"></iframe>
+  </div>
+</section>
+
+<script>
+  // Descargar archivo .tex localmente
+  function download(filename, text) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'}));
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }
+
+  // Compilar y mostrar PDF en el iframe (misma página)
+  function compileAndShow() {
+    const status = document.getElementById('status');
+    const frame  = document.getElementById('pdfFrame');
+    const code   = document.getElementById('latexInput').value;
+
+    if (!code.trim()) {
+      alert('Pega tu código LaTeX primero.');
+      return;
+    }
+
+    status.textContent = 'Compilando…';
+    const base = 'https://latexonline.cc/compile';
+    const url  = base + '?text=' + encodeURIComponent(code);
+
+    frame.src = url; // Muestra el PDF aquí mismo
+    setTimeout(() => { status.textContent = 'Listo (si no ves el PDF, espera unos segundos y vuelve a pulsar).'; }, 1500);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btnPDF').addEventListener('click', compileAndShow);
+    document.getElementById('btnTex').addEventListener('click', () => {
+      const code = document.getElementById('latexInput').value || '';
+      if (!code.trim()) { alert('No hay código para descargar.'); return; }
+      download('documento.tex', code);
+    });
+  });
+</script>
+<!-- === Fin del bloque LaTeX === -->
   <!-- Footer -->
   <footer class="bg-gray-900 text-gray-300">
     <div class="max-w-6xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between">
